@@ -83,6 +83,20 @@ async function run() {
             }
 
         })
+        // get userDetails by user Email
+        app.get('/user/:email', async (req, res) => {
+            const userEmail = req.params.email;
+
+            const query = { email: userEmail }
+            const userDetails = await userCollection.findOne(query)
+
+            res.send({
+                status: true,
+                data: userDetails
+            })
+
+
+        })
 
         // get All Posts from database
         app.get('/posts', async (req, res) => {
@@ -119,6 +133,33 @@ async function run() {
 
 
         })
+
+        // update user info
+        app.put('/updateUserInfo/:id', async (req, res) => {
+
+            try {
+                const id = req.params.id;
+                const updatedInfo = req.body
+                const { name, address, university, userEmail } = updatedInfo
+                console.log(userEmail)
+
+                const result = await userCollection.updateOne({ _id: ObjectId(id) }, { $set: { name: name, address: address, university: university } })
+
+                const query = { userEmail: userEmail }
+                const result2 = await postCollection.updateMany(query, { $set: { userName: name } })
+
+                if (result.modifiedCount) {
+
+                    res.send({
+                        status: true
+                    })
+                }
+
+            } catch (error) {
+                console.log(error.name, error.message)
+            }
+        })
+
 
 
 
