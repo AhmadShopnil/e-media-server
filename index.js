@@ -19,6 +19,7 @@ async function run() {
         const userCollection = client.db('E-Media').collection('users')
         const postCollection = client.db('E-Media').collection('post')
         const commentsCollection = client.db('E-Media').collection('comments')
+        const reactCollection = client.db('E-Media').collection('reacts')
 
         // save user in database
         app.post('/saveUser', async (req, res) => {
@@ -60,10 +61,22 @@ async function run() {
                     }
                 )
             }
+        })// add react in database
+        app.post('/addReact', async (req, res) => {
+            const reactInfo = req.body
+            const result = await reactCollection.insertOne(reactInfo)
+            if (result) {
+                res.send(
+                    {
+                        status: true,
+                        data: result
+                    }
+                )
+            }
         })
+
         // get comment from database
         app.get('/comments/:id', async (req, res) => {
-
             const id = req.params.id
             const query = { postId: id }
             // const cursor = postCollection.find(query);
@@ -100,7 +113,6 @@ async function run() {
 
         // get All Posts from database
         app.get('/posts', async (req, res) => {
-
             const query = {}
             // const cursor = postCollection.find(query);
             const cursor = postCollection.find(query).sort({ time: -1 })
@@ -120,28 +132,46 @@ async function run() {
 
         })
 
+        // get All Posts by reactions
+        app.get('/HomePagePost', async (req, res) => {
+            const query = {}
+            // const cursor = postCollection.find(query);
+            const cursor = postCollection.find(query).sort({ react: -1 })
+                ;
+            const posts = await cursor.toArray()
+            if (posts.length) {
+                res.send({
+                    status: true,
+                    data: posts
+                })
+            }
+            else {
+                res.send({
+                    status: true
+                })
+            }
+
+        })
+
+
+
         // get Post details/singlePost from database
         app.get('/postDetails/:id', async (req, res) => {
             const id = req.params.id
             const query = { _id: ObjectId(id) }
             const postDetails = await postCollection.findOne(query)
-
             res.send({
                 status: true,
                 data: postDetails
             })
-
-
         })
 
         // update user info
         app.put('/updateUserInfo/:id', async (req, res) => {
-
             try {
                 const id = req.params.id;
                 const updatedInfo = req.body
                 const { name, address, university, userEmail } = updatedInfo
-                console.log(userEmail)
 
                 const result = await userCollection.updateOne({ _id: ObjectId(id) }, { $set: { name: name, address: address, university: university } })
 
@@ -160,6 +190,26 @@ async function run() {
             }
         })
 
+        // increase reation by post
+        app.put('/updateReaction/:id', async (req, res) => {
+            try {
+                const id = req.params.id;
+                const updatedReactInfo = req.body
+                const { react } = updatedReactInfo
+
+                const result = await postCollection.updateOne({ _id: ObjectId(id) }, { $set: { react: react } })
+
+                if (result.modifiedCount) {
+
+                    res.send({
+                        status: true
+                    })
+                }
+
+            } catch (error) {
+                console.log(error.name, error.message)
+            }
+        })
 
 
 
