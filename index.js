@@ -190,14 +190,52 @@ async function run() {
             }
         })
 
-        // increase reation by post
+        // increase reaction by post
         app.put('/updateReaction/:id', async (req, res) => {
             try {
                 const id = req.params.id;
                 const updatedReactInfo = req.body
-                const { react } = updatedReactInfo
+                const { react, userEmail } = updatedReactInfo
+                // const reactedUsers = ['r@gmail.com']
+                // const result = await postCollection.updateOne({ _id: ObjectId(id) }, { $set: { reactedUsers: reactedUsers } })
+                const result = await postCollection.updateOne({
+                    "_id": ObjectId(id),
+                    "reactedUsers": { "$ne": userEmail }
+                },
+                    {
+                        "$inc": { "react": 1 },
+                        "$push": { "reactedUsers": userEmail }
+                    })
 
-                const result = await postCollection.updateOne({ _id: ObjectId(id) }, { $set: { react: react } })
+                if (result.modifiedCount) {
+
+                    res.send({
+                        status: true
+                    })
+                }
+
+            } catch (error) {
+                console.log(error.name, error.message)
+            }
+        })
+
+
+
+        // remove reation by post
+        app.put('/removeReaction/:id', async (req, res) => {
+            try {
+                const id = req.params.id;
+                const userInfo = req.body
+                const { userEmail } = userInfo
+                // console.log(userEmail)
+                const result = await postCollection.updateOne({
+                    "_id": ObjectId(id),
+                    "reactedUsers": userEmail
+                },
+                    {
+                        "$inc": { "react": -1 },
+                        "$pull": { "reactedUsers": userEmail }
+                    })
 
                 if (result.modifiedCount) {
 
